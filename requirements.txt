@@ -5,6 +5,8 @@ matplotlib>=3.7.0
 seaborn>=0.12.0
 scikit-learn>=1.3.0
 
+tensorflow>=2.16.0
+
 # kagglehub 
 kagglehub>=0.2.0
 
