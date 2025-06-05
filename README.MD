@@ -8,7 +8,7 @@ ML proj for classifying music genres using audio features.
 - Python 3.12 (required for TensorFlow)
 - Git
 
-### Option 1: Using pip (Recommended)
+### Using pip
 
 ```bash
 # clone the repository
@@ -34,23 +34,11 @@ python -m ipykernel install --user --name=venv --display-name="Python (venv 3.12
 jupyter notebook
 ```
 
-### Option 2: Using conda
+### Run the frontend
 
 ```bash
-# clone repo
-git clone https://github.com/rpc1001/music-genre-ml.git
-cd music-genre-ml
+# make sure models are trained then start the Flask app
+python app.py
 
-# create conda environment
-conda create -n music-genre python=3.12
-conda activate music-genre
-
-# install dependencies
-pip install -r requirements.txt
-
-# (RECOMMENDED) Register the conda env as a Jupyter kernel
-python -m ipykernel install --user --name=music-genre --display-name="Python (music-genre 3.12)"
-
-# launch Jupyter notebook
-jupyter notebook
+# open browser to http://localhost:8080
 ```

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Genre Classifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
+        <h1 class="text-2xl font-bold text-center mb-6">🎵 Genre Classifier</h1>
+        
+        <button id="predictBtn" 
+                class="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition-colors mb-6">
+            Predict Random Song
+        </button>
+        
+        <div id="results" class="hidden">
+            <div class="bg-gray-50 p-4 rounded mb-6">
+                <h3 id="songTitle" class="font-semibold"></h3>
+                <p id="songArtist" class="text-gray-600 text-sm"></p>
+                <p id="actualGenre" class="text-sm mt-2 font-medium"></p>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="text-center p-3 bg-purple-50 rounded">
+                    <div class="text-xs text-purple-600 font-medium">Neural Network</div>
+                    <div id="nnPrediction" class="text-sm font-bold text-purple-800"></div>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded">
+                    <div class="text-xs text-green-600 font-medium">Random Forest</div>
+                    <div id="rfPrediction" class="text-sm font-bold text-green-800"></div>
+                </div>
+                <div class="text-center p-3 bg-blue-50 rounded">
+                    <div class="text-xs text-blue-600 font-medium">SGD Classifier</div>
+                    <div id="sgdPrediction" class="text-sm font-bold text-blue-800"></div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded">
+                <h4 class="text-sm font-medium mb-3 text-gray-700">Probability Distribution Across All Genres</h4>
+                <canvas id="chart" class="w-full"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('predictBtn');
+        const results = document.getElementById('results');
+        let chart = null;
+        
+        btn.onclick = async () => {
+            btn.textContent = 'Predicting...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: '{}'
+                });
+                
+                const data = await response.json();
+                
+                // show song info
+                document.getElementById('songTitle').textContent = data.song_info.track;
+                document.getElementById('songArtist').textContent = `by ${data.song_info.artist}`;
+                document.getElementById('actualGenre').textContent = `Actual: ${data.song_info.actual_genre}`;
+                
+                // show top predictions
+                document.getElementById('nnPrediction').textContent = 
+                    `${data.predictions.neural_network.genre}\n${(data.predictions.neural_network.confidence * 100).toFixed(1)}%`;
+                document.getElementById('rfPrediction').textContent = 
+                    `${data.predictions.random_forest.genre}\n${(data.predictions.random_forest.confidence * 100).toFixed(1)}%`;
+                document.getElementById('sgdPrediction').textContent = 
+                    `${data.predictions.sgd_classifier.genre}\n${(data.predictions.sgd_classifier.confidence * 100).toFixed(1)}%`;
+                
+                // create chart
+                createChart(data.all_probabilities);
+                
+                results.classList.remove('hidden');
+                
+            } catch (error) {
+                alert('err making prediction');
+            }
+            
+            btn.textContent = 'Predict Random Song';
+            btn.disabled = false;
+        };
+
+        function createChart(probabilities) {
+            const ctx = document.getElementById('chart').getContext('2d');
+            if (chart) chart.destroy();
+            
+            const genres = Object.keys(probabilities);
+            const nnData = genres.map(g => (probabilities[g].nn_prob * 100).toFixed(1));
+            const rfData = genres.map(g => (probabilities[g].rf_prob * 100).toFixed(1));
+            const sgdData = genres.map(g => (probabilities[g].sgd_prob * 100).toFixed(1));
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: genres,
+                    datasets: [
+                        {
+                            label: 'Neural Network',
+                            data: nnData,
+                            backgroundColor: 'rgba(147, 51, 234, 0.7)',
+                            borderColor: 'rgba(147, 51, 234, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Random Forest',
+                            data: rfData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'SGD Classifier',
+                            data: sgdData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Confidence (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Genres'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

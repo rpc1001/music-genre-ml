@@ -16,8 +16,6 @@ env/
 # Data files
 *.csv
 *.json
-*.pkl
-*.h5
 data/
 datasets/
 
