@@ -16,6 +16,9 @@ env/
 # Data files
 *.csv
 *.json
+*.keras
+*.pkl
+
 data/
 datasets/
 
