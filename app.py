@@ -1,11 +1,10 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 import numpy as np
 import pandas as pd
 import joblib
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -45,7 +44,6 @@ def index():
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
-  data= request.json
   
   # Sample from test set (unseen data)
   random_song = test_set.sample(1).iloc[0]
