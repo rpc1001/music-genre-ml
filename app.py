@@ -1,11 +1,10 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 import numpy as np
 import pandas as pd
 import joblib
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -19,6 +18,25 @@ label_encoder = joblib.load('label_encoder.pkl')
 model_info = joblib.load('model_info.pkl')
 test_set = pd.read_csv('test_set.csv')
 
+def preprocess_song_data(song_data):
+  # create dataframe
+  df = pd.DataFrame([song_data])
+  
+  # one-hot encode
+  if 'key' in df.columns:
+    df = pd.get_dummies(df,  columns=['key'],  drop_first=True)
+  if 'mode' in df.columns:
+    df = pd.get_dummies(df,  columns=['mode'],  drop_first=True)
+  
+
+  # add missing features
+  for feature in model_info['feature_names']:
+    if feature not in df.columns:
+      df[feature] =0
+  
+  # reorder and scale
+  df = df.reindex(columns=model_info['feature_names'], fill_value=0)
+  return scaler.transform(df)
 
 @app.route("/")
 def index():
@@ -26,7 +44,6 @@ def index():
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
-  data= request.json
   
   # Sample from test set (unseen data)
   random_song = test_set.sample(1).iloc[0]
@@ -42,10 +59,11 @@ def predict():
   }
 
   # predict
+  processed_data = preprocess_song_data(song_features)
   
-  nn_prediction =nn_model.predict(song_features,verbose=0)
-  rf_prediction =rf_model.predict_proba(song_features)
-  sgd_prediction = sgd_model.predict_proba(song_features)
+  nn_prediction =nn_model.predict(processed_data,verbose=0)
+  rf_prediction =rf_model.predict_proba(processed_data)
+  sgd_prediction = sgd_model.predict_proba(processed_data)
   
   # get results
   nn_index=  np.argmax(nn_prediction[0])
