@@ -17,10 +17,7 @@ sgd_model = joblib.load('sgd_model.pkl')
 scaler = joblib.load('scaler.pkl')
 label_encoder = joblib.load('label_encoder.pkl')
 model_info = joblib.load('model_info.pkl')
-
-import kagglehub
-path = kagglehub.dataset_download("vicsuperman/prediction-of-music-genre")
-sample_songs = pd.read_csv(os.path.join(path,"music_genre.csv"))
+test_set = pd.read_csv('test_set.csv')
 
 def preprocess_song_data(song_data):
   # create dataframe
@@ -50,16 +47,18 @@ def index():
 def predict():
   data= request.json
   
-  #random song from dataset
-  random_song = sample_songs.sample(1).iloc[0]
-  song_features = random_song.drop(['music_genre', 'artist_name', 'track_name'], errors='ignore').to_dict()
+  # Sample from test set (unseen data)
+  random_song = test_set.sample(1).iloc[0]
+  song_features = random_song.drop(['music_genre'], errors='ignore').to_dict()
   
   # clean missing values (replace '?' with 0)
   for key, value in song_features.items():
     if value == '?' or value == '' or pd.isna(value):
       song_features[key] = 0
   
-  song_info = {'artist': random_song.get('artist_name','Unknown Artist'),'track': random_song.get('track_name', 'Unknown Track'), 'actual_genre': random_song.get('music_genre', 'Unknown')}
+  song_info = {
+    'actual_genre': random_song.get('music_genre', 'Unknown')
+  }
 
   # predict
   processed_data = preprocess_song_data(song_features)
